@@ -4,6 +4,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.Stack;
@@ -31,12 +32,12 @@ public class SortController {
     }
 
     static int getMaxIndex(int[] arr, int start, int end) {
-  int max = start;
-  for (int i = start; i <= end; i++) {
-    if (arr[max] < arr[i]) {
-      max = i;
-    }
-  }
+        int max = start;
+        for (int i = start; i <= end; i++) {
+            if (arr[max] < arr[i]) {
+                max = i;
+            }
+        }
   return max;
 }
     @GetMapping("/cycleSort")
@@ -107,6 +108,7 @@ public class SortController {
         });
         return emitter;
     }
+
     @GetMapping("/selectionSort")
     @CrossOrigin(origins = "http://localhost:3000")
     public SseEmitter streamSseMvc3(@RequestParam("arr") String arrStr) {
@@ -203,13 +205,20 @@ public class SortController {
                         s.push(boundary);
                         s.push(boundary + 1);
                         s.push(r);
+                        // Update the array with the sorted partition
+                        System.arraycopy(arr, l, arr, l, boundary - l + 1);
                     }
+                    System.out.println(l+" "+ r);
                     SseEmitter.SseEventBuilder event = SseEmitter.event().data(arr);
                     emitter.send(event);
                     Thread.sleep(2500);
                     System.out.println("Sent event: " + Arrays.toString(arr));
 
                     System.out.println("Current iteration: " + i);
+                    // Check if the array is sorted
+                    if (isSorted(arr)) {
+                        break;
+                    }
                 }
                 SseEmitter.SseEventBuilder completed = SseEmitter.event().data("completed");
                 emitter.send(completed);
@@ -222,7 +231,16 @@ public class SortController {
         return emitter;
     }
 
-    private int partition(int[] nums, int start, int end) {
+    static boolean isSorted(int[] arr) {
+        for (int i = 0; i < arr.length - 1; i++) {
+            if (arr[i] > arr[i + 1]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static int partition(int[] nums, int start, int end) {
         if (start >= end) {
             return -1;
         }
